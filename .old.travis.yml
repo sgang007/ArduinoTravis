@@ -1,0 +1,54 @@
+language: cpp
+compiler:
+ - gcc
+
+install:
+ - wget http://downloads.arduino.cc/arduino-1.5.6-r2-linux64.tgz
+ - ls -alF
+ - tar -xvf arduino-1.5.6-r2-linux64.tgz
+ - sudo mv arduino-1.5.6-r2/ /usr/local/share/arduino
+ - sudo apt-get install aptitude
+ - sudo aptitude update && sudo aptitude -y install ia32-libs
+ - git clone -b ide1.5x https://github.com/justonia/ino.git
+ - cd ino && sudo make install && cd ../
+ - sudo pip install jinja2
+ - sudo pip install pyserial
+ - pwd
+
+script:
+ - ino --help
+ - file /usr/local/share/arduino/hardware/tools/g++_arm_none_eabi/bin
+ - ls -alF /usr/local/share/arduino/hardware/tools/g++_arm_none_eabi/bin
+ - /usr/local/share/arduino/hardware/tools/g++_arm_none_eabi/bin/arm-none-eabi-gcc --version
+# ------------------ Do not touch anything above this line ------------------
+
+
+
+
+
+ # This loops through all the projects in the bottomside arduino folder, and builds them
+ - cd Bottomside/Arduino for d in */ ; do cd "$d" && ino build -m arduino_due_x_dbg; cd ..; done
+
+ # Define what shall be built Manually
+ #- cd PROJECT_FOLDER && ino build -m arduino_due_x_dbg
+
+
+
+
+# ------------------ Do not touch anything below this line ------------------
+
+
+
+  # ---------- Success Prep Script ----------
+ - mkdir product
+ - cd product && zip -r Bottomside_$TRAVIS_BUILD_NUMBER-$TRAVIS_COMMIT.zip /../Bottomside/Arduino/
+  # This will create a zipped file if build was a success, and that zipped file will be released
+
+ deploy:
+  provider: releases
+  api-key: $OAUTHKEY
+  file: /Product/Bottomside_$TRAVIS_BUILD_NUMBER-$TRAVIS_COMMIT.zip
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
